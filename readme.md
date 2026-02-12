@@ -218,7 +218,7 @@ Architect-level decisions are based on context, not just best practices.
 
 
 
-# Azure Governance Case Study – Tailwind Traders
+#2. Azure Governance Case Study – Tailwind Traders
 
 ## Case Study Overview
 
@@ -348,153 +348,70 @@ Cons:
 
 ### Requirement: Track All Project Costs
 
-#### Option A: Dedicated Subscription for Project
+## Case Study – New Development Project
 
-(Placed under appropriate Business Unit MG or Shared Projects MG)
-
-Sub-CustomerFeedback-DevTest
-
-
-All project resources live in this subscription.
-
-Pros:
-- 100% cost isolation
-- CFO can easily track total project spend
-- Strong governance
-
-Cons:
-- Additional subscription to manage
+**Question:**  
+- The company has a new development project for customer feedback.  
+- The CFO wants to ensure all costs associated with the project are captured.  
+- For the testing phase, workloads should be hosted on lower-cost virtual machines.  
+- The virtual machines should be named to indicate they are part of the project.  
+- Any instances of non-compliance with resource consistency rules should be automatically identified.  
+- What are the different ways Tailwind Traders could track costs for the new development project?  
+- How are you ensuring compliance with the requirements for virtual machine sizing and naming?  
+- Propose at least two ways of meeting the requirements. Explain your final decision.
 
 ---
 
-#### Option B: Shared Subscription + Project Resource Group + Tags
+### Solution
 
-Existing Subscription
-└── RG-CustomerFeedback-DevTest
+### 1️⃣ Ways to Track Costs for the Project
 
+**Option A: Dedicated Subscription for the Project (Recommended)**  
+- Create a new subscription: `Sub-CustomerFeedback-DevTest`  
+- Deploy all project resources here.  
+- **Advantages:**  
+  - Complete cost isolation  
+  - Simple reporting for CFO  
+  - Strong governance and policy application  
+- **Disadvantages:**  
+  - Extra subscription to manage
 
-Tags applied:
-- Project = CustomerFeedback
-- Environment = Test
-
-Pros:
-- No new subscription required
-- Faster to deploy
-
-Cons:
-- Risk of cost leakage
-- Harder to enforce strict isolation
-
----
-
-### Final Recommendation for Project Cost Tracking
-
-**Option A (Dedicated Subscription)** is recommended because:
-- CFO requirement for full cost capture
-- Strong financial accountability
-- Cleaner reporting
-
----
-
-## Enforcing VM Sizing and Naming Compliance
-
-### Requirement
-- Use lower-cost VMs for testing
-- VM names must indicate project
-- Automatically detect non-compliance
+**Option B: Shared Subscription + Project Resource Group + Tags**  
+- Deploy project resources into an existing workload subscription.  
+- Create a dedicated resource group: `RG-CustomerFeedback-DevTest`  
+- Apply tags:  
+  - `Project: CustomerFeedback`  
+  - `Environment: DevTest`  
+- **Advantages:**  
+  - No new subscription required  
+  - Quicker deployment  
+- **Disadvantages:**  
+  - Less isolation  
+  - Depends on correct tagging for accurate cost tracking  
 
 ---
 
-### Option 1: Azure Policy (Recommended)
+### 2️⃣ Ensuring VM Sizing and Naming Compliance
 
-Policies:
-- Allowed VM SKUs (e.g. B-series, small D-series)
-- VM naming convention:
-  - Must start with: `CFB-`
-- Deny or Audit non-compliant deployments
+**Option 1: Azure Policy (Recommended)**  
+- Enforce allowed VM sizes (e.g., B-series, small D-series) for testing workloads.  
+- Enforce VM naming conventions, e.g.:  
+  - `CFB-Dev-*`  
+  - `CFB-Test-*`  
+- Policy evaluation automatically identifies non-compliant resources.  
 
-Examples:
-- Allowed sizes: Standard_B2s, Standard_B1ms
-- Naming rule: Name must match `CFB-*`
-
-Pros:
-- Automatic enforcement
-- Prevents non-compliant deployments
-- Scales across subscriptions
-
----
-
-### Option 2: CI/CD + Scripts + Manual Review
-
-- Naming enforced in deployment pipelines
-- Cost reviewed manually
-- Alerts on large VM sizes
-
-Pros:
-- Flexible
-- Works without Azure Policy
-
-Cons:
-- Easy to bypass
-- Not consistent
-- Higher operational risk
+**Option 2: CI/CD Pipelines + Scripts + Manual Review**  
+- Enforce naming and sizing via deployment pipelines.  
+- Review deployments manually.  
+- **Disadvantages:**  
+  - Human error risk  
+  - Non-compliance may go unnoticed  
 
 ---
 
-### Final Recommendation for Compliance
+### 3️⃣ Final Recommendation
 
-**Azure Policy is the best solution** because it provides:
-- Automatic enforcement
-- Central governance
-- Consistent compliance
-
----
-
-## Well-Architected Framework Alignment
-
-### Cost Optimization
-- Right-size VMs (lower-cost SKUs)
-- Dedicated subscription for project cost visibility
-- Cost allocation using management groups and tags
-
-### Operational Excellence
-- Azure Policy for automated governance
-- Standardized naming conventions
-- Consistent subscription structure
-
-### Security
-- Policies inherited via management groups
-- Central IT visibility
-- Reduced risk of misconfiguration
-
-### Reliability
-- Standardized environments
-- Controlled deployment patterns
-
-### Performance Efficiency
-- Appropriate VM sizing for test workloads
-- Avoid over-provisioning
-
----
-
-## Key Learnings
-
-- Management Groups are for governance and policy inheritance.
-- Subscriptions are the primary cost and isolation boundary.
-- Resource Groups are for organizing workloads.
-- Tags are for cross-cutting cost and business reporting.
-- Azure Policy is critical for enforcing standards at scale.
-- Landing Zones provide a scalable foundation for enterprise Azure adoption.
-
----
-
-## Summary
-
-This governance design enables Tailwind Traders to:
-- Track costs per business unit and department
-- Provide enterprise-wide reporting
-- Enforce compliance for new projects
-- Align with Azure best practices and the Well-Architected Framework
-
+- **Cost Tracking:** Option A (Dedicated Subscription) for strong isolation and clean reporting.  
+- **VM Sizing and Naming Compliance:** Option 1 (Azure Policy) for automated enforcement and consistency.
 
 

@@ -209,3 +209,292 @@ The appropriate option depends on Tailwind Traders’ cloud maturity, legacy dep
 There is no single “best” architecture. Mature solution design involves evaluating tradeoffs across security, collaboration, cost, operations, and modernization readiness.
 
 Architect-level decisions are based on context, not just best practices.
+
+
+
+
+
+
+
+
+
+# Azure Governance Case Study – Tailwind Traders
+
+## Case Study Overview
+
+### Business Structure
+
+Tailwind Traders has two main business units:
+- Apparel
+- Sporting Goods
+
+Each business unit has three departments:
+- Product Development
+- Marketing
+- Sales
+
+### Governance Requirements
+
+#### Cost and Accounting
+- Each business unit and department must track their Azure spend.
+- Enterprise IT must provide company-wide Azure cost reporting.
+
+#### New Development Project (Customer Feedback Project)
+- CFO wants all project-related costs tracked.
+- Testing workloads must run on lower-cost virtual machines.
+- Virtual machines must be named to indicate they belong to the project.
+- Non-compliant resources must be automatically identified.
+
+---
+
+## Task 1 – Cost and Accounting
+
+### Option 1: Management Group per Business Unit and Department
+
+### Hierarchy Design
+
+Tenant Root Group
+├── Apparel (Management Group)
+│ ├── Apparel-ProductDev (MG)
+│ │ └── Sub-Apparel-ProductDev
+│ ├── Apparel-Marketing (MG)
+│ │ └── Sub-Apparel-Marketing
+│ └── Apparel-Sales (MG)
+│ └── Sub-Apparel-Sales
+│
+└── SportingGoods (Management Group)
+├── SG-ProductDev (MG)
+│ └── Sub-SG-ProductDev
+├── SG-Marketing (MG)
+│ └── Sub-SG-Marketing
+└── SG-Sales (MG)
+└── Sub-SG-Sales
+
+
+### Why This Works
+
+- Clear ownership per department
+- Cost reports can be generated per subscription
+- Enterprise IT can report at:
+  - Business unit level (MG)
+  - Company-wide (root MG)
+
+### Trade-offs
+
+Pros:
+- Strong isolation
+- Clear cost ownership
+- Easier chargeback/showback
+
+Cons:
+- More subscriptions to manage
+- Higher operational overhead
+
+---
+
+### Option 2: Subscription per Business Unit + Resource Groups per Department
+
+### Hierarchy Design
+
+Tenant Root Group
+├── Sub-Apparel
+│ ├── RG-ProductDev
+│ ├── RG-Marketing
+│ └── RG-Sales
+│
+└── Sub-SportingGoods
+├── RG-ProductDev
+├── RG-Marketing
+└── RG-Sales
+
+
+### Why This Works
+
+- Simpler structure
+- Fewer subscriptions
+- Cost tracked using:
+  - Resource groups
+  - Tags (Department, CostCenter)
+
+### Trade-offs
+
+Pros:
+- Easier to manage
+- Lower subscription sprawl
+- Faster to set up
+
+Cons:
+- Weaker isolation
+- Less granular governance
+- Harder to apply different policies per department
+
+---
+
+### Final Recommendation for Cost and Accounting
+
+**Option 1 is recommended** if Tailwind Traders needs:
+- Strong governance
+- Department-level accountability
+- Clear separation of responsibilities
+
+**Option 2 is acceptable** if:
+- Organization is smaller
+- Simplicity is prioritized
+- Departments do not need strict isolation
+
+---
+
+## Task 2 – New Development Project (Customer Feedback)
+
+### Requirement: Track All Project Costs
+
+#### Option A: Dedicated Subscription for Project
+
+(Placed under appropriate Business Unit MG or Shared Projects MG)
+
+Sub-CustomerFeedback-DevTest
+
+
+All project resources live in this subscription.
+
+Pros:
+- 100% cost isolation
+- CFO can easily track total project spend
+- Strong governance
+
+Cons:
+- Additional subscription to manage
+
+---
+
+#### Option B: Shared Subscription + Project Resource Group + Tags
+
+Existing Subscription
+└── RG-CustomerFeedback-DevTest
+
+
+Tags applied:
+- Project = CustomerFeedback
+- Environment = Test
+
+Pros:
+- No new subscription required
+- Faster to deploy
+
+Cons:
+- Risk of cost leakage
+- Harder to enforce strict isolation
+
+---
+
+### Final Recommendation for Project Cost Tracking
+
+**Option A (Dedicated Subscription)** is recommended because:
+- CFO requirement for full cost capture
+- Strong financial accountability
+- Cleaner reporting
+
+---
+
+## Enforcing VM Sizing and Naming Compliance
+
+### Requirement
+- Use lower-cost VMs for testing
+- VM names must indicate project
+- Automatically detect non-compliance
+
+---
+
+### Option 1: Azure Policy (Recommended)
+
+Policies:
+- Allowed VM SKUs (e.g. B-series, small D-series)
+- VM naming convention:
+  - Must start with: `CFB-`
+- Deny or Audit non-compliant deployments
+
+Examples:
+- Allowed sizes: Standard_B2s, Standard_B1ms
+- Naming rule: Name must match `CFB-*`
+
+Pros:
+- Automatic enforcement
+- Prevents non-compliant deployments
+- Scales across subscriptions
+
+---
+
+### Option 2: CI/CD + Scripts + Manual Review
+
+- Naming enforced in deployment pipelines
+- Cost reviewed manually
+- Alerts on large VM sizes
+
+Pros:
+- Flexible
+- Works without Azure Policy
+
+Cons:
+- Easy to bypass
+- Not consistent
+- Higher operational risk
+
+---
+
+### Final Recommendation for Compliance
+
+**Azure Policy is the best solution** because it provides:
+- Automatic enforcement
+- Central governance
+- Consistent compliance
+
+---
+
+## Well-Architected Framework Alignment
+
+### Cost Optimization
+- Right-size VMs (lower-cost SKUs)
+- Dedicated subscription for project cost visibility
+- Cost allocation using management groups and tags
+
+### Operational Excellence
+- Azure Policy for automated governance
+- Standardized naming conventions
+- Consistent subscription structure
+
+### Security
+- Policies inherited via management groups
+- Central IT visibility
+- Reduced risk of misconfiguration
+
+### Reliability
+- Standardized environments
+- Controlled deployment patterns
+
+### Performance Efficiency
+- Appropriate VM sizing for test workloads
+- Avoid over-provisioning
+
+---
+
+## Key Learnings
+
+- Management Groups are for governance and policy inheritance.
+- Subscriptions are the primary cost and isolation boundary.
+- Resource Groups are for organizing workloads.
+- Tags are for cross-cutting cost and business reporting.
+- Azure Policy is critical for enforcing standards at scale.
+- Landing Zones provide a scalable foundation for enterprise Azure adoption.
+
+---
+
+## Summary
+
+This governance design enables Tailwind Traders to:
+- Track costs per business unit and department
+- Provide enterprise-wide reporting
+- Enforce compliance for new projects
+- Align with Azure best practices and the Well-Architected Framework
+
+
+
